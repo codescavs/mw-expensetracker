@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <!-- Viewport meta tag to scale to mobile devices size. Charset definition because Chrome and Firefox were mad I didn't have this in -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <style>
+    /* 
+      Moved the CSS styles to the main HTML for presentation purposes */
+
+    table {
+      width: 100%;
+      min-width: 320px;
+      border-collapse: collapse;
+    }
+    /* Table Striping */
+
+    tr:nth-of-type(odd) {
+      background: #eee;
+    }
+
+    tr {
+      min-width: 200px;
+    }
+
+    th {
+      background: #333;
+      color: white;
+      font-weight: bold;
+    }
+
+    td,
+    th {
+      padding: 6px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    /* Max width set - modifies when this responsive/mobile table formatting
+        comes into effect */
+
+    @media only screen and (max-width: 420px),
+    (min-device-width: 320px) and (max-device-width: 420px) {
+
+      /* Force table to not be like tables anymore */
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      /* Hide table headers (but not display: none;, for accessibility) */
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+
+      tr {
+        border: 1px solid #ccc;
+      }
+
+      td {
+        /* Behave  like a "row" */
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 50%;
+      }
+
+      td:before {
+        /* Now like a table header */
+        position: right;
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+      }
+
+      /*
+      Label the data -- This is required because the original <th> becomes hidden
+      so these labels appear inplace of them acting like a column when the table
+      scales down */
+      td:nth-of-type(1):before {
+        content: "Name";
+      }
+      td:nth-of-type(2):before {
+        content: "Amount";
+      }
+      td:nth-of-type(3):before {
+        content: "Type";
+      }
+      td:nth-of-type(4):before {
+        content: "Date";
+      }
+    }
+  </style>
+
+  <!-- Angular -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+
+  <!-- FirebaseJS script: DB connection is defined in script.js -->
+  <script src="https://cdn.firebase.com/js/client/2.2.4/firebase.js"></script>
+
+  <!-- Plugin that allows for simple configuration and connection to Firebase, and has Angular integration -->
+  <script src="https://cdn.firebase.com/libs/angularfire/1.1.3/angularfire.min.js"></script>
+
+
+  <!-- Bootstrap -->
+  <script data-require="jquery@*" data-semver="2.2.0" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  <link href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" integrity="sha384-+ENW/yibaokMnme+vBLnHMphUYxHs34h9lpdbSLuAwGkOKFRl4C34WkjazBtb7eT"
+    crossorigin="anonymous">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+    crossorigin="anonymous"></script>
+
+  <!-- Custom CSS - Date Picker CSS/JS 
+      redundant at the moment as I included all the CSS in a style tag in this file
+      for presentation, otherwise that much CSS should probably go in a separate file. -->
+  <!-- <link rel="stylesheet" href="/css/style.css"> -->
+
+
+
+</head>
+
+<body ng-app="app">
+  <div ng-controller="ExpenseCtrl">
+    <nav class="navbar navbar-default">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">Expense
+          <sup>Tracker</sup>
+        </a>
+      </div>
+    </nav>
+
+    <div class="container">
+
+      <!-- Add Expense Collapsable Bootstrap Panel -->
+      <div class="panel-group">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" href="#collapse1">
+                <b>Add Expense +</b>
+              </a>
+            </h4>
+          </div>
+          <div id="collapse1" class="panel-collapse collapse">
+            <div class="panel-body">
+              <form name="expForm" class="form-horizontal" role="form">
+                <div class="form-group col-md-8">
+                  <div class="col-sm-8">
+                    <input type="text" class="col-md-8 form-control input-sm" required="" ng-model="expName" placeholder="Expense Label" />
+                  </div>
+                </div>
+                <!-- Invalid input check on amount form -->
+                <div class="form-group col-md-8">
+                  <div class="col-md-8">
+                    <div class="form-group" ng-class="{'has-error': expForm.expAmount.$invalid}">
+
+                      <div class="col-md-8">
+                        <input type="number" class="form-control col-md-8 input-sm" name="expAmount" placeholder="Enter Cost" ng-model="expAmount"
+                          ng-pattern="/^[0-9]+(\.[0-9]{1,2})?$/" step="0.01" required />
+
+                        <span class="help-block" ng-show="!expForm.expAmount.$valid">
+                          Invalid!
+                        </span>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group col-md-8">
+                  <div class="col-sm-8">
+                    <select name="categ" id="" class="form-control col-md-8 input-sm" ng-model="expCategory">
+                      <option value="">Category</option>
+                      <option value="Textbooks">Textbooks</option>
+                      <option value="Bills">Bills</option>
+                      <option value="Food">Food</option>
+                      <option value="Pizza">Pizza</option>
+                      <option value="Misc">Misc</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group col-md-8">
+                  <div class="col-md-8">
+                    <input type="date" ng-model="expDate"></input>
+                  </div>
+
+                  <div class="col-sm-3">
+                    <button ng-click="addExpense()" class="btn btn-success pull-right">Add</button>
+                  </div>
+                </div>
+
+
+              </form>
+            </div>
+            <div class="panel-footer">
+              <a data-toggle="collapse" href="#collapse1">
+                <b>Add Expense -</b>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End of Collapsable Panel -->
+
+      <!-- Expense Display Table Start -->
+
+
+
+      <div class="alert alert-success">
+        <strong>Total:</strong>${{expenses.total.amount}}/$2600
+      </div>
+
+      <!-- Table calculates the total value by using ng-init in
+        conjunction with ng-repeat -->
+      <table class="table-striped table-condensed cf" ng-init="expenses.total = {}">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Type</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="expense in expenses">
+            <td>{{expense.name}}</td>
+            <td ng-init="expenses.total.amount = expenses.total.amount + expense.amount">${{expense.amount}}</td>
+            <td>{{expense.category}}</td>
+            <td>{{expense.date}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <br />
+
+      <!-- Expense Display Table End -->
+
+      <!-- Hardcoded the total budget as I forgot until last about it 
+           placed the total expenses number here -->
+      <div class="panel-group">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" href="#collapse2">
+                <b>Budget +</b>
+              </a>
+            </h4>
+          </div>
+          <div id="collapse2" class="panel-collapse collapse">
+            <div class="panel-body">
+              <div class="form-group col-md-8">
+                <label>Your Budget is: $2600</label>
+
+                <br/>
+                <br/>
+                <p>Total Expenses: {{getTotalExpenses()}}.</p>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <a data-toggle="collapse" href="#collapse2">
+                <b>Budget -</b>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Base JS file and decimal truncate -->
+  <script src="javascript/script.js"></script>
+  <script>
+    $(document).ready(function () {
+      $('input#decimal').blur(function () {
+        var num = parseFloat($(this).val());
+        var cleanNum = num.toFixed(2);
+        $(this).val(cleanNum);
+        if (num / cleanNum < 1) {
+          $('#error').text('Please enter up to 2 decimal places.');
+        }
+      });
+    });
+  </script>
+
+
+
+</body>
+
+</html>
